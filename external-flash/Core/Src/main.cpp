@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -28,6 +29,7 @@
 #include <stdio.h>
 
 #include "printf_to_uart.c"
+#include "w25qxx/w25qxx.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +49,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t write_buffer[8] = {1,1,2,2,3,3,4,5};
+uint8_t read_buffer[8];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,10 +94,16 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM16_Init();
   MX_USART1_UART_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Base_Start_IT(&htim16);
   printf("Timer16 Start \n");
+
+  W25qxx_Init();
+  W25qxx_EraseSector(1);
+  W25qxx_WriteSector(write_buffer, 1, 0, 8);
+  W25qxx_ReadSector(read_buffer, 1, 0, 8);
 
   /* USER CODE END 2 */
 
@@ -179,7 +188,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance == TIM16)
 	{
-		printf("timer event 3 \n");
+		printf("read[0] = %d \n", read_buffer[0]);
+		printf("read[4] = %d \n", read_buffer[4]);
+		printf("read[0] = %d \n", write_buffer[0]);
+		printf("read[4] = %d \n", write_buffer[4]);
+		printf("timer event 4 \n");
 	}
 }
 
