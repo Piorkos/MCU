@@ -25,7 +25,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
 
+#include "print_to_uart.c"
+#include "Imu.hpp"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,18 +48,55 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+//-====
+//-====
+uint32_t btn_delay{500000};
+uint32_t counter_1{1000000};
+uint32_t counter_2{1000000};
+uint32_t counter_3{1000000};
 
+
+
+uint8_t MPU9250_DataRdyFlag = 0;
+uint8_t initDataRdy = 0;
+uint8_t magCalibrateFlag = 1;
+
+/*mag calibration data*/
+static float mx_centre;
+static float my_centre;
+static float mz_centre;
+
+float Axyz[3];
+float Gxyz[3];
+float Mxyz[3];
+
+float gravity[3];
+float MagConst[3];
+float gyroBias[3];
+//====
+//====
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+//-====
+//-====
+void getGyroData();
+void getAccelData();
+void getCompassData();
+void getRawCompassData();
+void calibrateMag();
+void getRawGyroData();
+//====
+//====
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+//-====
+Imu *myMPU = new Imu (&hi2c1);
+//====
 /* USER CODE END 0 */
 
 /**
@@ -97,6 +137,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  if(counter_1 < (btn_delay + 1))
+	  {
+		  ++counter_1;
+	  }
+	  if(counter_2 < (btn_delay + 1))
+	  {
+		  ++counter_2;
+	  }
+	  if(counter_3 < (btn_delay + 1))
+	  {
+		  ++counter_3;
+	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -171,7 +224,33 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin == BTN_1_Pin)
+	{
+		if(counter_1 > btn_delay)
+		{
+			counter_1 = 0;
+			printf("BTN 1 \n");
+		}
+	}
+	if(GPIO_Pin == BTN_2_Pin)
+	{
+		if(counter_2 > btn_delay)
+		{
+			counter_2 = 0;
+			printf("BTN 2 \n");
+		}
+	}
+	if(GPIO_Pin == BTN_3_Pin)
+	{
+		if(counter_3 > btn_delay)
+		{
+			counter_3 = 0;
+			printf("BTN 3 \n");
+		}
+	}
+}
 /* USER CODE END 4 */
 
 /**

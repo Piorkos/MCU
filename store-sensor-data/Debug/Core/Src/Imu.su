@@ -1,0 +1,30 @@
+Imu.cpp:17:1:Imu::Imu(I2C_HandleTypeDef*)	24	static
+Imu.cpp:45:6:void Imu::initialize()	16	static
+Imu.cpp:96:9:uint8_t Imu::getGyroDLPFMode()	32	static
+Imu.cpp:108:6:void Imu::setGyroDLPFMode(uint8_t)	40	static
+Imu.cpp:134:9:uint8_t Imu::getFullScaleGyroRange()	32	static
+Imu.cpp:146:6:void Imu::setFullScaleGyroRange(uint8_t)	40	static
+Imu.cpp:174:9:uint8_t Imu::getFullScaleAccelRange()	32	static
+Imu.cpp:182:6:void Imu::setFullScaleAccelRange(uint8_t)	40	static
+Imu.cpp:190:9:uint8_t Imu::getAccDLPFMode()	32	static
+Imu.cpp:195:6:void Imu::setAccDLPFMode(uint8_t)	40	static
+Imu.cpp:222:6:void Imu::getMotion9(int16_t*, int16_t*, int16_t*, int16_t*, int16_t*, int16_t*, int16_t*, int16_t*, int16_t*)	48	static
+Imu.cpp:254:6:void Imu::getMotion6(int16_t*, int16_t*, int16_t*, int16_t*, int16_t*, int16_t*)	40	static
+Imu.cpp:301:6:void Imu::getAcceleration(int16_t*, int16_t*, int16_t*)	40	static
+Imu.cpp:313:9:int16_t Imu::getAccelerationX()	32	static
+Imu.cpp:324:9:int16_t Imu::getAccelerationY()	32	static
+Imu.cpp:334:9:int16_t Imu::getAccelerationZ()	32	static
+Imu.cpp:346:9:int16_t Imu::getTemperature()	32	static
+Imu.cpp:386:6:void Imu::getRotation(int16_t*, int16_t*, int16_t*)	40	static
+Imu.cpp:398:9:int16_t Imu::getRotationX()	32	static
+Imu.cpp:409:9:int16_t Imu::getRotationY()	32	static
+Imu.cpp:419:9:int16_t Imu::getRotationZ()	32	static
+Imu.cpp:433:6:void Imu::setSleepEnabled(bool)	40	static
+Imu.cpp:471:6:void Imu::setClockSource(uint8_t)	40	static
+Imu.cpp:488:9:uint8_t Imu::getDeviceID()	32	static
+Imu.cpp:493:6:void Imu::setBypassEnableAndInterrupt()	40	static
+Imu.cpp:500:6:void Imu::enableInterrupt()	40	static
+Imu.cpp:507:6:void Imu::setMagContMeasMode()	40	static
+Imu.cpp:513:6:void Imu::getMagData(int16_t*, int16_t*, int16_t*)	48	static
+Imu.cpp:527:9:uint8_t Imu::getCompassDataReady()	40	static
+Imu.cpp:535:6:void Imu::readIntStatus()	32	static
