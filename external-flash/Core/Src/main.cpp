@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string>
 
 #include "printf_to_uart.c"
 #include "w25qxx/w25qxx.h"
@@ -104,6 +105,10 @@ int main(void)
   W25qxx_EraseSector(1);
   W25qxx_WriteSector(write_buffer, 1, 0, 8);
   W25qxx_ReadSector(read_buffer, 1, 0, 8);
+
+  std::string name = "test";
+
+  name.length();
 
   /* USER CODE END 2 */
 
@@ -190,8 +195,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 		printf("read[0] = %d \n", read_buffer[0]);
 		printf("read[4] = %d \n", read_buffer[4]);
-		printf("read[0] = %d \n", write_buffer[0]);
-		printf("read[4] = %d \n", write_buffer[4]);
+		printf("write[0] = %d \n", write_buffer[0]);
+		printf("write[4] = %d \n", write_buffer[4]);
 		printf("timer event 4 \n");
 	}
 }
