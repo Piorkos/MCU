@@ -56,7 +56,6 @@ uint32_t counter_2{1000000};
 uint32_t counter_3{1000000};
 
 
-
 uint8_t MPU9250_DataRdyFlag = 0;
 uint8_t initDataRdy = 0;
 uint8_t magCalibrateFlag = 1;
@@ -130,11 +129,43 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  //  -====
+  //  -====
+  uint8_t deviceID;
+  deviceID = myMPU->getDeviceID();
+  if (deviceID == 0x71)
+  {
+	  myMPU->initialize();//initialize
+  }
+  else
+  {
+	  printf("ID wrong");
+	  return 0;
+  }
 
+  printf("Device OK, reading data \r\n");
+  //  ====
+  //  ====
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  //  -====
+  //  -====
+  if(magCalibrateFlag)
+  {
+	  calibrateMag();
+	  printf("Mag Calibration done! \r\n");
+	  HAL_Delay(4000);
+	  printf("Put the device to rest!! \r\n");
+  }
+
+  HAL_Delay(4000);
+
+  //enable interrupt
+  myMPU->enableInterrupt();
+  myMPU->readIntStatus();
+
   while (1)
   {
 	  if(counter_1 < (btn_delay + 1))
@@ -149,7 +180,8 @@ int main(void)
 	  {
 		  ++counter_3;
 	  }
-
+	  //  ====
+	  //  ====
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -232,6 +264,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			counter_1 = 0;
 			printf("BTN 1 \n");
+
+			getGyroData();
+			getAccelData();
+			getCompassData();
+			printf("GYRO: %f %f %f Accel: %f %f %f Compass: %f %f %f \r\n",Gxyz[0],Gxyz[1],Gxyz[2],Axyz[0],Axyz[1],Axyz[2],Mxyz[0],Mxyz[1],Mxyz[2]);
 		}
 	}
 	if(GPIO_Pin == BTN_2_Pin)
@@ -251,6 +288,114 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		}
 	}
 }
+void getGyroData()
+{
+  int16_t gx, gy, gz;
+  myMPU->getRotation(&gx, &gy, &gz);
+  Gxyz[0] = (float) gx * 500 / 32768;//131 LSB(??/s)
+  Gxyz[1] = (float) gy * 500 / 32768;
+  Gxyz[2] = (float) gz * 500 / 32768;
+  Gxyz[0] = Gxyz[0] - gyroBias[0];
+  Gxyz[1] = Gxyz[1] - gyroBias[1];
+  Gxyz[2] = Gxyz[1] - gyroBias[2];
+  //High Pass Filter -> remove all values that are less than 0.05dps.
+  for (int i=0;i<3;i++){
+    if(Gxyz[i]<0.05){
+      Gxyz[i]=0;
+    }
+  }
+}
+
+void getRawGyroData()
+{
+	int16_t gx, gy, gz;
+	myMPU->getRotation(&gx, &gy, &gz);
+	Gxyz[0] = (float) gx * 500 / 32768;//131 LSB(??/s)
+	Gxyz[1] = (float) gy * 500 / 32768;
+	Gxyz[2] = (float) gz * 500 / 32768;
+}
+
+void getAccelData(){
+	int16_t ax, ay, az;
+	myMPU->getAcceleration(&ax,&ay,&az);
+	Axyz[0] = (float) ax / 16384;//16384  LSB/g
+	Axyz[1] = (float) ay / 16384;
+	Axyz[2] = (float) az / 16384;
+}
+
+void getCompassData(){
+	uint8_t dataReady = myMPU->getCompassDataReady();
+	if (dataReady == 1){
+		int16_t mx, my, mz;
+		myMPU->getMagData(&mx,&my,&mz);
+		//14 bit output.
+		Mxyz[0] = (float) mx * 4912 / 8192;
+		Mxyz[1] = (float) my * 4912 / 8192;
+		Mxyz[2] = (float) mz * 4912 / 8192;
+		Mxyz[0] = Mxyz[0] - mx_centre;
+		Mxyz[1] = Mxyz[1] - my_centre;
+		Mxyz[2] = Mxyz[2] - mz_centre;
+
+		/*frame transformation -> coz mag is mounted on different axies with gyro and accel*/
+		float temp = Mxyz[0];
+		Mxyz[0] = Mxyz[1];
+		Mxyz[1] = temp;
+		Mxyz[2] = Mxyz[2]*(-1);
+	}
+}
+
+void getRawCompassData(){
+	uint8_t dataReady = myMPU->getCompassDataReady();
+	if (dataReady == 1){
+		int16_t mx, my, mz;
+		myMPU->getMagData(&mx,&my,&mz);
+		//14 bit output.
+		Mxyz[0] = (float) mx * 4912 / 8192;
+		Mxyz[1] = (float) my * 4912 / 8192;
+		Mxyz[2] = (float) mz * 4912 / 8192;
+	}else{
+		printf("Mag data not ready, using original data");
+	}
+}
+
+void calibrateMag(){
+  uint16_t ii = 0, sample_count = 0;
+  float mag_max[3] = {1,1,1};
+  float mag_min[3] = {-1,-1,-1};
+
+  printf("Mag Calibration: Wave device in a figure eight until done! \r\n");
+  HAL_Delay(2000);
+
+  sample_count = 100;
+  for(ii = 0; ii < sample_count; ii++) {
+    getRawCompassData();  // Read the mag data
+    for (int jj = 0; jj < 3; jj++) {
+      if(Mxyz[jj] > mag_max[jj]) mag_max[jj] = Mxyz[jj];
+      if(Mxyz[jj] < mag_min[jj]) mag_min[jj] = Mxyz[jj];
+    }
+    HAL_Delay(200);
+  }
+
+  // Get hard iron correction
+  mx_centre  = (mag_max[0] + mag_min[0])/2;  // get average x mag bias in counts
+  my_centre  = (mag_max[1] + mag_min[1])/2;  // get average y mag bias in counts
+  mz_centre  = (mag_max[2] + mag_min[2])/2;  // get average z mag bias in counts
+
+
+  // Get soft iron correction estimate
+  /*
+  mag_scale[0]  = (mag_max[0] - mag_min[0])/2;  // get average x axis max chord length in counts
+  mag_scale[1]  = (mag_max[1] - mag_min[1])/2;  // get average y axis max chord length in counts
+  mag_scale[2]  = (mag_max[2] - mag_min[2])/2;  // get average z axis max chord length in counts
+  float avg_rad = mag_scale[0] + mag_scale[1] + mag_scale[2];
+  avg_rad /= 3.0;
+  dest2[0] = avg_rad/((float)mag_scale[0]);
+  dest2[1] = avg_rad/((float)mag_scale[1]);
+  dest2[2] = avg_rad/((float)mag_scale[2]);
+  */
+}
+//====
+//====
 /* USER CODE END 4 */
 
 /**

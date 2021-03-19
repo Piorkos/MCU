@@ -77,7 +77,7 @@ main-build: store-sensor-data.elf secondary-outputs
 
 # Tool invocations
 store-sensor-data.elf: $(OBJS) $(USER_OBJS) /Users/dominikpiorkowski/Desktop/drive/projekty/MCU/store-sensor-data/STM32WB55RGVX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "store-sensor-data.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/dominikpiorkowski/Desktop/drive/projekty/MCU/store-sensor-data/STM32WB55RGVX_FLASH.ld" --specs=nosys.specs -Wl,-Map="store-sensor-data.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+	arm-none-eabi-g++ -o "store-sensor-data.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/dominikpiorkowski/Desktop/drive/projekty/MCU/store-sensor-data/STM32WB55RGVX_FLASH.ld" --specs=nosys.specs -Wl,-Map="store-sensor-data.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
