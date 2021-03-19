@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
+#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -29,6 +30,7 @@
 
 #include "print_to_uart.c"
 #include "Imu.hpp"
+#include "w25qxx/w25qxx.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,6 +74,10 @@ float Mxyz[3];
 float gravity[3];
 float MagConst[3];
 float gyroBias[3];
+
+//external flash storage
+uint8_t write_buffer[8] = {1,1,2,2,3,3,4,5};
+uint8_t read_buffer[8];
 //====
 //====
 /* USER CODE END PV */
@@ -128,6 +134,7 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_USART1_UART_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
   //  -====
   //  -====
@@ -144,6 +151,8 @@ int main(void)
   }
 
   printf("Device OK, reading data \r\n");
+
+  W25qxx_Init();
   //  ====
   //  ====
   /* USER CODE END 2 */
@@ -269,6 +278,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			getAccelData();
 			getCompassData();
 			printf("GYRO: %f %f %f Accel: %f %f %f Compass: %f %f %f \r\n",Gxyz[0],Gxyz[1],Gxyz[2],Axyz[0],Axyz[1],Axyz[2],Mxyz[0],Mxyz[1],Mxyz[2]);
+
+			W25qxx_EraseSector(1);
+			W25qxx_WriteSector(write_buffer, 1, 0, 8);
 		}
 	}
 	if(GPIO_Pin == BTN_2_Pin)
@@ -285,6 +297,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			counter_3 = 0;
 			printf("BTN 3 \n");
+
+			W25qxx_ReadSector(read_buffer, 1, 0, 8);
 		}
 	}
 }
