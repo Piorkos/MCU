@@ -8,6 +8,7 @@ C_SRCS += \
 ../Core/Src/gpio.c \
 ../Core/Src/i2c.c \
 ../Core/Src/print_to_uart.c \
+../Core/Src/spi.c \
 ../Core/Src/stm32wbxx_hal_msp.c \
 ../Core/Src/stm32wbxx_it.c \
 ../Core/Src/syscalls.c \
@@ -23,6 +24,7 @@ C_DEPS += \
 ./Core/Src/gpio.d \
 ./Core/Src/i2c.d \
 ./Core/Src/print_to_uart.d \
+./Core/Src/spi.d \
 ./Core/Src/stm32wbxx_hal_msp.d \
 ./Core/Src/stm32wbxx_it.d \
 ./Core/Src/syscalls.d \
@@ -36,6 +38,7 @@ OBJS += \
 ./Core/Src/i2c.o \
 ./Core/Src/main.o \
 ./Core/Src/print_to_uart.o \
+./Core/Src/spi.o \
 ./Core/Src/stm32wbxx_hal_msp.o \
 ./Core/Src/stm32wbxx_it.o \
 ./Core/Src/syscalls.o \
@@ -59,6 +62,8 @@ Core/Src/main.o: ../Core/Src/main.cpp Core/Src/subdir.mk
 	arm-none-eabi-g++ "$<" -mcpu=cortex-m4 -std=gnu++14 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32WB55xx -c -I../Core/Inc -I../Drivers/STM32WBxx_HAL_Driver/Inc -I../Drivers/STM32WBxx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32WBxx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -fno-use-cxa-atexit -Wall -fstack-usage -MMD -MP -MF"Core/Src/main.d" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
 Core/Src/print_to_uart.o: ../Core/Src/print_to_uart.c Core/Src/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32WB55xx -c -I../Core/Inc -I../Drivers/STM32WBxx_HAL_Driver/Inc -I../Drivers/STM32WBxx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32WBxx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/print_to_uart.d" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
+Core/Src/spi.o: ../Core/Src/spi.c Core/Src/subdir.mk
+	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32WB55xx -c -I../Core/Inc -I../Drivers/STM32WBxx_HAL_Driver/Inc -I../Drivers/STM32WBxx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32WBxx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/spi.d" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
 Core/Src/stm32wbxx_hal_msp.o: ../Core/Src/stm32wbxx_hal_msp.c Core/Src/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32WB55xx -c -I../Core/Inc -I../Drivers/STM32WBxx_HAL_Driver/Inc -I../Drivers/STM32WBxx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32WBxx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/stm32wbxx_hal_msp.d" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
 Core/Src/stm32wbxx_it.o: ../Core/Src/stm32wbxx_it.c Core/Src/subdir.mk

@@ -52,7 +52,7 @@
 /* USER CODE BEGIN PV */
 //-====
 //-====
-uint32_t btn_delay{500000};
+uint32_t btn_delay{200000};
 uint32_t counter_1{1000000};
 uint32_t counter_2{1000000};
 uint32_t counter_3{1000000};
@@ -77,7 +77,11 @@ float gyroBias[3];
 
 //external flash storage
 uint8_t write_buffer[8] = {1,1,2,2,3,3,4,5};
-uint8_t read_buffer[8];
+uint8_t write_buffer_2[8] = {6,6,7,7,8,8,9,9};
+uint8_t read_buffer[16];
+bool write_to_flash{false};
+bool read_from_flash{false};
+
 //====
 //====
 /* USER CODE END PV */
@@ -152,7 +156,6 @@ int main(void)
 
   printf("Device OK, reading data \r\n");
 
-  W25qxx_Init();
   //  ====
   //  ====
   /* USER CODE END 2 */
@@ -169,11 +172,20 @@ int main(void)
 	  printf("Put the device to rest!! \r\n");
   }
 
-  HAL_Delay(4000);
+//  HAL_Delay(4000);
+
+  printf("MPU enable \n");
 
   //enable interrupt
   myMPU->enableInterrupt();
   myMPU->readIntStatus();
+
+
+
+  printf("Init FLASH \n");
+  W25qxx_Init();
+
+  printf("--WHILE-- \n");
 
   while (1)
   {
@@ -189,6 +201,24 @@ int main(void)
 	  {
 		  ++counter_3;
 	  }
+
+	  if(write_to_flash)
+	  {
+		  write_to_flash = false;
+
+		  W25qxx_EraseSector(1);
+		  W25qxx_WriteSector(write_buffer, 1, 0, 8);
+		  W25qxx_WriteSector(write_buffer_2, 1, 8, 8);
+	  }
+
+	  if(read_from_flash)
+	  {
+		  read_from_flash = false;
+
+		  W25qxx_ReadSector(read_buffer, 1, 0, 16);
+	  }
+
+
 	  //  ====
 	  //  ====
     /* USER CODE END WHILE */
@@ -277,10 +307,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			getGyroData();
 			getAccelData();
 			getCompassData();
-			printf("GYRO: %f %f %f Accel: %f %f %f Compass: %f %f %f \r\n",Gxyz[0],Gxyz[1],Gxyz[2],Axyz[0],Axyz[1],Axyz[2],Mxyz[0],Mxyz[1],Mxyz[2]);
 
-			W25qxx_EraseSector(1);
-			W25qxx_WriteSector(write_buffer, 1, 0, 8);
+			write_to_flash = true;
+
+			printf("GYRO: %f %f %f Accel: %f %f %f Compass: %f %f %f \n",Gxyz[0],Gxyz[1],Gxyz[2],Axyz[0],Axyz[1],Axyz[2],Mxyz[0],Mxyz[1],Mxyz[2]);
 		}
 	}
 	if(GPIO_Pin == BTN_2_Pin)
@@ -298,7 +328,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			counter_3 = 0;
 			printf("BTN 3 \n");
 
-			W25qxx_ReadSector(read_buffer, 1, 0, 8);
+			read_from_flash = true;
 		}
 	}
 }

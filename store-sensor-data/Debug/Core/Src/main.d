@@ -32,11 +32,14 @@ Core/Src/main.o: ../Core/Src/main.cpp ../Core/Inc/main.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_bus.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_rcc_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_crs.h \
+ ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi.h \
+ ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h \
- ../Core/Inc/i2c.h ../Core/Inc/main.h ../Core/Inc/usart.h \
- ../Core/Inc/gpio.h ../Core/Src/print_to_uart.c ../Core/Inc/Imu.hpp
+ ../Core/Inc/i2c.h ../Core/Inc/main.h ../Core/Inc/spi.h \
+ ../Core/Inc/usart.h ../Core/Inc/gpio.h ../Core/Src/print_to_uart.c \
+ ../Core/Inc/Imu.hpp ../Core/Inc/w25qxx/w25qxx.h
 
 ../Core/Inc/main.h:
 
@@ -106,6 +109,10 @@ Core/Src/main.o: ../Core/Src/main.cpp ../Core/Inc/main.h \
 
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_crs.h:
 
+../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi.h:
+
+../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi_ex.h:
+
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h:
 
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h:
@@ -116,6 +123,8 @@ Core/Src/main.o: ../Core/Src/main.cpp ../Core/Inc/main.h \
 
 ../Core/Inc/main.h:
 
+../Core/Inc/spi.h:
+
 ../Core/Inc/usart.h:
 
 ../Core/Inc/gpio.h:
@@ -123,3 +132,5 @@ Core/Src/main.o: ../Core/Src/main.cpp ../Core/Inc/main.h \
 ../Core/Src/print_to_uart.c:
 
 ../Core/Inc/Imu.hpp:
+
+../Core/Inc/w25qxx/w25qxx.h:

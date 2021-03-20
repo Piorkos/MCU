@@ -1,13 +1,13 @@
 print_to_uart.c:13:5:int __io_putchar(char)	16	static
-main.cpp:105:5:int main()	16	static
-main.cpp:196:6:void SystemClock_Config()	192	static
-main.cpp:259:6:void HAL_GPIO_EXTI_Callback(uint16_t)	144	static
-main.cpp:291:6:void getGyroData()	24	static
-main.cpp:309:6:void getRawGyroData()	16	static
-main.cpp:318:6:void getAccelData()	16	static
-main.cpp:326:6:void getCompassData()	24	static
-main.cpp:347:6:void getRawCompassData()	16	static
-main.cpp:361:6:void calibrateMag()	48	static
-main.cpp:405:6:void Error_Handler()	4	static,ignoring_inline_asm
-main.cpp:414:1:void __static_initialization_and_destruction_0(int, int)	24	static
-main.cpp:414:1:cpp)	8	static
+main.cpp:115:5:int main()	40	static
+main.cpp:242:6:void SystemClock_Config()	192	static
+main.cpp:305:6:void HAL_GPIO_EXTI_Callback(uint16_t)	144	static
+main.cpp:342:6:void getGyroData()	24	static
+main.cpp:360:6:void getRawGyroData()	16	static
+main.cpp:369:6:void getAccelData()	16	static
+main.cpp:377:6:void getCompassData()	24	static
+main.cpp:398:6:void getRawCompassData()	16	static
+main.cpp:412:6:void calibrateMag()	48	static
+main.cpp:456:6:void Error_Handler()	4	static,ignoring_inline_asm
+main.cpp:465:1:void __static_initialization_and_destruction_0(int, int)	24	static
+main.cpp:465:1:cpp)	8	static
