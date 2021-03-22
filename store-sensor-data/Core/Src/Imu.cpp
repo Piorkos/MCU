@@ -48,12 +48,12 @@ void Imu::initialize() {
     setClockSource(MPU9250_CLOCK_PLL_XGYRO);
     //set gyro output data rate to 1000hz
     setGyroDLPFMode(1);
-    //set gyro range to 500dps.
-    setFullScaleGyroRange(MPU9250_GYRO_FS_500);
+    //set gyro range to 1000dps.
+    setFullScaleGyroRange(MPU9250_GYRO_FS_1000);
     //set accel output data rate to 1000hz
     setAccDLPFMode(1);
-    //set accel range to 2g
-    setFullScaleAccelRange(MPU9250_ACCEL_FS_2);
+    //set accel range to 16g
+    setFullScaleAccelRange(MPU9250_ACCEL_FS_16);
     //setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
     //set i2c bypass enable pin to true to access magnetometer and configure interrupt
     setBypassEnableAndInterrupt();

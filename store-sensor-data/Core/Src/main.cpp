@@ -57,28 +57,20 @@ uint32_t counter_1{1000000};
 uint32_t counter_2{1000000};
 uint32_t counter_3{1000000};
 
-
 uint8_t MPU9250_DataRdyFlag = 0;
 uint8_t initDataRdy = 0;
 uint8_t magCalibrateFlag = 1;
 
 /*mag calibration data*/
-static float mx_centre;
-static float my_centre;
-static float mz_centre;
-
 float Axyz[3];
 float Gxyz[3];
-float Mxyz[3];
 
-float gravity[3];
-float MagConst[3];
 float gyroBias[3];
 
 //external flash storage
-uint8_t write_buffer[8] = {1,1,2,2,3,3,4,5};
-uint8_t write_buffer_2[8] = {6,6,7,7,8,8,9,9};
-uint8_t read_buffer[16];
+uint32_t samples_saved{0};
+uint32_t selected_sample{1};
+
 bool write_to_flash{false};
 bool read_from_flash{false};
 
@@ -91,11 +83,13 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 //-====
 //-====
+void accel_serialise(float *a_xyz, uint8_t *accel_int_8);
+void accel_parse(uint8_t *accel, float *accel_parsed);
+void gyro_serialise(float *g_xyz, uint8_t *g_xyz_uint_8);
+void gyro_parse(uint8_t *g_xyz_uint_8, float *g_xyz);
+
 void getGyroData();
 void getAccelData();
-void getCompassData();
-void getRawCompassData();
-void calibrateMag();
 void getRawGyroData();
 //====
 //====
@@ -164,29 +158,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   //  -====
   //  -====
-  if(magCalibrateFlag)
-  {
-	  calibrateMag();
-	  printf("Mag Calibration done! \r\n");
-	  HAL_Delay(4000);
-	  printf("Put the device to rest!! \r\n");
-  }
 
-//  HAL_Delay(4000);
-
-  printf("MPU enable \n");
+  HAL_Delay(4000);
 
   //enable interrupt
+  printf("MPU enable \n");
   myMPU->enableInterrupt();
   myMPU->readIntStatus();
 
-
-
   printf("Init FLASH \n");
   W25qxx_Init();
+  W25qxx_EraseSector(1);
 
   printf("--WHILE-- \n");
-
   while (1)
   {
 	  if(counter_1 < (btn_delay + 1))
@@ -206,19 +190,48 @@ int main(void)
 	  {
 		  write_to_flash = false;
 
-		  W25qxx_EraseSector(1);
-		  W25qxx_WriteSector(write_buffer, 1, 0, 8);
-		  W25qxx_WriteSector(write_buffer_2, 1, 8, 8);
+		  uint8_t a_xyz_uint_8[6];
+		  uint8_t g_xyz_uint_8[6];
+		  accel_serialise(Axyz, a_xyz_uint_8);
+		  gyro_serialise(Gxyz, g_xyz_uint_8);
+
+		  uint32_t offset{samples_saved * 12};
+
+		  W25qxx_WriteSector(a_xyz_uint_8, 1, offset, 6);
+		  W25qxx_WriteSector(g_xyz_uint_8, 1, (offset + 6), 6);
+
+		  ++samples_saved;
 	  }
 
 	  if(read_from_flash)
 	  {
-		  read_from_flash = false;
+		  if(samples_saved > 0)
+		  {
+			  read_from_flash = false;
 
-		  W25qxx_ReadSector(read_buffer, 1, 0, 16);
+			  uint8_t read_buffer_1[6];
+			  uint8_t read_buffer_2[6];
+
+			  uint32_t offset{selected_sample};
+			  offset = (offset - 1) * 12;
+
+			  W25qxx_ReadSector(read_buffer_1, 1, offset, 6);
+			  W25qxx_ReadSector(read_buffer_2, 1, (offset + 6), 6);
+			  //		  printf("r[0]: %d, r[1]: %d \n", read_buffer[0], read_buffer[1]);
+			  //		  printf("r[0]: %d, r[1]: %d, r[2]: %d, r[3]: %d, r[4]: %d, r[5]: %d \n", read_buffer[0], read_buffer[1], read_buffer[2], read_buffer[3], read_buffer[4], read_buffer[5]);
+
+			  float a_xyz[3];
+			  float g_xyz[3];
+			  accel_parse(read_buffer_1, a_xyz);
+			  gyro_parse(read_buffer_2, g_xyz);
+			  printf("DATA FROM EXTERNAL FLASH MEMORY: \n");
+			  printf("\t GYRO : X = %f, Y = %f, Z = %f ACCEL: X = %f, Y = %f, Z = %f \n", g_xyz[0], g_xyz[1], g_xyz[2], a_xyz[0], a_xyz[1], a_xyz[2]);
+		  }
+		  else
+		  {
+			  printf("No data saved yet. \n");
+		  }
 	  }
-
-
 	  //  ====
 	  //  ====
     /* USER CODE END WHILE */
@@ -295,6 +308,79 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//Converts captured FLOAT accelerometer data into 2 * UINT8 variables which can be stored in external Flash memory
+void accel_serialise(float *a_xyz, uint8_t *a_xyz_uint_8)
+{
+	uint16_t accel_int_16;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		accel_int_16 = 0;
+
+		a_xyz[i] = a_xyz[i] + 16;
+		a_xyz[i] = a_xyz[i] * 1000;
+
+		accel_int_16 = static_cast<uint16_t>(a_xyz[i]);
+		a_xyz_uint_8[2 * i] = accel_int_16 & 0xff;
+		a_xyz_uint_8[(2 * i) + 1] = (accel_int_16 >> 8);
+	}
+}
+
+//Converts stored in Flash memory data into accelerometer data format in FLOAT
+void accel_parse(uint8_t *a_xyz_uint_8, float *a_xyz)
+{
+	uint16_t accel_int_16;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		accel_int_16 = 0;
+
+		accel_int_16 = (a_xyz_uint_8[(2 * i) + 1] << 8);
+		accel_int_16 = accel_int_16 | a_xyz_uint_8[2*i];
+
+		a_xyz[i] = static_cast<float>(accel_int_16);
+		a_xyz[i] = a_xyz[i] / 1000;
+		a_xyz[i] = a_xyz[i] - 16;
+	}
+}
+
+void gyro_serialise(float *g_xyz, uint8_t *g_xyz_uint_8)
+{
+	uint16_t gyro_int_16;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		gyro_int_16 = 0;
+
+		g_xyz[i] = g_xyz[i] + 1000;
+		g_xyz[i] = g_xyz[i] * 10;
+
+		gyro_int_16 = static_cast<uint16_t>(g_xyz[i]);
+		g_xyz_uint_8[2 * i] = gyro_int_16 & 0xff;
+		g_xyz_uint_8[(2 * i) + 1] = (gyro_int_16 >> 8);
+	}
+}
+
+//Converts stored in Flash memory data into accelerometer data format in FLOAT
+void gyro_parse(uint8_t *g_xyz_uint_8, float *g_xyz)
+{
+	uint16_t gyro_int_16;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		gyro_int_16 = 0;
+
+		gyro_int_16 = (g_xyz_uint_8[(2 * i) + 1] << 8);
+		gyro_int_16 = gyro_int_16 | g_xyz_uint_8[2*i];
+
+		g_xyz[i] = static_cast<float>(gyro_int_16);
+		g_xyz[i] = g_xyz[i] / 10;
+		g_xyz[i] = g_xyz[i] - 1000;
+	}
+}
+
+
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if(GPIO_Pin == BTN_1_Pin)
@@ -306,11 +392,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 			getGyroData();
 			getAccelData();
-			getCompassData();
 
 			write_to_flash = true;
 
-			printf("GYRO: %f %f %f Accel: %f %f %f Compass: %f %f %f \n",Gxyz[0],Gxyz[1],Gxyz[2],Axyz[0],Axyz[1],Axyz[2],Mxyz[0],Mxyz[1],Mxyz[2]);
+			printf("GYRO: %f %f %f \t ACCEL: %f %f %f \n",Gxyz[0],Gxyz[1],Gxyz[2],Axyz[0],Axyz[1],Axyz[2]);
 		}
 	}
 	if(GPIO_Pin == BTN_2_Pin)
@@ -319,6 +404,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			counter_2 = 0;
 			printf("BTN 2 \n");
+
+			if(selected_sample < samples_saved)
+			{
+				++selected_sample;
+			}
+			else
+			{
+				selected_sample = 1;
+			}
+
+			printf("selected sample: %d / %d \n", static_cast<int>(selected_sample), static_cast<int>(samples_saved));
 		}
 	}
 	if(GPIO_Pin == BTN_3_Pin)
@@ -336,9 +432,9 @@ void getGyroData()
 {
   int16_t gx, gy, gz;
   myMPU->getRotation(&gx, &gy, &gz);
-  Gxyz[0] = (float) gx * 500 / 32768;//131 LSB(??/s)
-  Gxyz[1] = (float) gy * 500 / 32768;
-  Gxyz[2] = (float) gz * 500 / 32768;
+  Gxyz[0] = (float) gx * 1000 / 32768;//65.6 LSB(??/s)
+  Gxyz[1] = (float) gy * 1000 / 32768;
+  Gxyz[2] = (float) gz * 1000 / 32768;
   Gxyz[0] = Gxyz[0] - gyroBias[0];
   Gxyz[1] = Gxyz[1] - gyroBias[1];
   Gxyz[2] = Gxyz[1] - gyroBias[2];
@@ -354,89 +450,17 @@ void getRawGyroData()
 {
 	int16_t gx, gy, gz;
 	myMPU->getRotation(&gx, &gy, &gz);
-	Gxyz[0] = (float) gx * 500 / 32768;//131 LSB(??/s)
-	Gxyz[1] = (float) gy * 500 / 32768;
-	Gxyz[2] = (float) gz * 500 / 32768;
+	Gxyz[0] = (float) gx * 1000 / 32768;//65.5 LSB(??/s)
+	Gxyz[1] = (float) gy * 1000 / 32768;
+	Gxyz[2] = (float) gz * 1000 / 32768;
 }
 
 void getAccelData(){
 	int16_t ax, ay, az;
 	myMPU->getAcceleration(&ax,&ay,&az);
-	Axyz[0] = (float) ax / 16384;//16384  LSB/g
-	Axyz[1] = (float) ay / 16384;
-	Axyz[2] = (float) az / 16384;
-}
-
-void getCompassData(){
-	uint8_t dataReady = myMPU->getCompassDataReady();
-	if (dataReady == 1){
-		int16_t mx, my, mz;
-		myMPU->getMagData(&mx,&my,&mz);
-		//14 bit output.
-		Mxyz[0] = (float) mx * 4912 / 8192;
-		Mxyz[1] = (float) my * 4912 / 8192;
-		Mxyz[2] = (float) mz * 4912 / 8192;
-		Mxyz[0] = Mxyz[0] - mx_centre;
-		Mxyz[1] = Mxyz[1] - my_centre;
-		Mxyz[2] = Mxyz[2] - mz_centre;
-
-		/*frame transformation -> coz mag is mounted on different axies with gyro and accel*/
-		float temp = Mxyz[0];
-		Mxyz[0] = Mxyz[1];
-		Mxyz[1] = temp;
-		Mxyz[2] = Mxyz[2]*(-1);
-	}
-}
-
-void getRawCompassData(){
-	uint8_t dataReady = myMPU->getCompassDataReady();
-	if (dataReady == 1){
-		int16_t mx, my, mz;
-		myMPU->getMagData(&mx,&my,&mz);
-		//14 bit output.
-		Mxyz[0] = (float) mx * 4912 / 8192;
-		Mxyz[1] = (float) my * 4912 / 8192;
-		Mxyz[2] = (float) mz * 4912 / 8192;
-	}else{
-		printf("Mag data not ready, using original data");
-	}
-}
-
-void calibrateMag(){
-  uint16_t ii = 0, sample_count = 0;
-  float mag_max[3] = {1,1,1};
-  float mag_min[3] = {-1,-1,-1};
-
-  printf("Mag Calibration: Wave device in a figure eight until done! \r\n");
-  HAL_Delay(2000);
-
-  sample_count = 100;
-  for(ii = 0; ii < sample_count; ii++) {
-    getRawCompassData();  // Read the mag data
-    for (int jj = 0; jj < 3; jj++) {
-      if(Mxyz[jj] > mag_max[jj]) mag_max[jj] = Mxyz[jj];
-      if(Mxyz[jj] < mag_min[jj]) mag_min[jj] = Mxyz[jj];
-    }
-    HAL_Delay(200);
-  }
-
-  // Get hard iron correction
-  mx_centre  = (mag_max[0] + mag_min[0])/2;  // get average x mag bias in counts
-  my_centre  = (mag_max[1] + mag_min[1])/2;  // get average y mag bias in counts
-  mz_centre  = (mag_max[2] + mag_min[2])/2;  // get average z mag bias in counts
-
-
-  // Get soft iron correction estimate
-  /*
-  mag_scale[0]  = (mag_max[0] - mag_min[0])/2;  // get average x axis max chord length in counts
-  mag_scale[1]  = (mag_max[1] - mag_min[1])/2;  // get average y axis max chord length in counts
-  mag_scale[2]  = (mag_max[2] - mag_min[2])/2;  // get average z axis max chord length in counts
-  float avg_rad = mag_scale[0] + mag_scale[1] + mag_scale[2];
-  avg_rad /= 3.0;
-  dest2[0] = avg_rad/((float)mag_scale[0]);
-  dest2[1] = avg_rad/((float)mag_scale[1]);
-  dest2[2] = avg_rad/((float)mag_scale[2]);
-  */
+	Axyz[0] = (float) ax / 2048;//2048  LSB/g
+	Axyz[1] = (float) ay / 2048;
+	Axyz[2] = (float) az / 2048;
 }
 //====
 //====
