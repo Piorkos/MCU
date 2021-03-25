@@ -57,10 +57,6 @@ uint32_t counter_1{1000000};
 uint32_t counter_2{1000000};
 uint32_t counter_3{1000000};
 
-uint8_t MPU9250_DataRdyFlag = 0;
-uint8_t initDataRdy = 0;
-uint8_t magCalibrateFlag = 1;
-
 /*mag calibration data*/
 float Axyz[3];
 float Gxyz[3];
