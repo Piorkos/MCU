@@ -1,9 +1,0 @@
-house_price_model.c:1131:9:house_price_model_configure_activations	24	static
-house_price_model.c:1196:9:house_price_model_configure_weights	24	static
-house_price_model.c:1283:9:ai_house_price_model_get_info	136	static
-house_price_model.c:1330:10:ai_house_price_model_get_error	16	static
-house_price_model.c:1336:10:ai_house_price_model_create	24	static
-house_price_model.c:1346:11:ai_house_price_model_destroy	16	static
-house_price_model.c:1352:9:ai_house_price_model_init	24	static
-house_price_model.c:1369:8:ai_house_price_model_run	24	static
-house_price_model.c:1376:8:ai_house_price_model_forward	16	static
